@@ -13,7 +13,7 @@ function Footer() {
               <Logo width="100px" />
             </div>
             <p className="text-sm text-yellow-300">
-              &copy; 2025 DevUI. All rights reserved.
+              &copy; 2025 SHYAM-RAMANI. All rights reserved.
             </p>
           </div>
 
