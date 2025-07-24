@@ -1,15 +1,16 @@
-import React from 'react'
-import { Editor } from '@tinymce/tinymce-react'
-import { Controller } from 'react-hook-form'
+import React from "react";
+import { Controller } from "react-hook-form";
+import { Editor } from "@tinymce/tinymce-react";
 
-export default function RTE({ name = "content", control, label, defaultValue = "" }) {
+export default function RTE({ name, control, label, defaultValue = "" }) {
+  if (!control) {
+    console.error("RTE: control prop is null. Make sure you're passing it from useForm.");
+    return null;
+  }
+
   return (
-    <div className="w-full">
-      {label && (
-        <label htmlFor={name} className="inline-block mb-1 pl-1 font-medium">
-          {label}
-        </label>
-      )}
+    <div className="w-full mb-4">
+      {label && <label className="inline-block mb-1 pl-1">{label}</label>}
 
       <Controller
         name={name}
@@ -17,28 +18,26 @@ export default function RTE({ name = "content", control, label, defaultValue = "
         defaultValue={defaultValue}
         render={({ field: { onChange, value } }) => (
           <Editor
-            id={name}
-            value={value}
-            onEditorChange={onChange}
+            apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
             init={{
-              height: 400,
-              menubar: true,
+              height: 500,
+              menubar: false,
               plugins: [
-                "advlist", "autolink", "lists", "link", "image", "charmap",
-                "preview", "anchor", "searchreplace", "visualblocks",
-                "code", "fullscreen", "insertdatetime", "media", "table",
-                "wordcount", "help"
+                "advlist autolink lists link image",
+                "charmap print preview anchor",
+                "searchreplace visualblocks code fullscreen",
+                "insertdatetime media table paste code help wordcount",
               ],
               toolbar:
-                "undo redo | formatselect | bold italic forecolor | " +
-                "alignleft aligncenter alignright alignjustify | " +
-                "bullist numlist outdent indent | removeformat | help",
-              content_style:
-                "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }"
+                "undo redo | formatselect | bold italic backcolor | \
+                alignleft aligncenter alignright alignjustify | \
+                bullist numlist outdent indent | removeformat | help",
             }}
+            value={value}
+            onEditorChange={onChange}
           />
         )}
       />
     </div>
-  )
+  );
 }

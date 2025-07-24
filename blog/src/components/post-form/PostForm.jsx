@@ -6,141 +6,153 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 export default function PostForm({ post }) {
-    const {
-        register,
-        handleSubmit,
-        watch,
-        setValue,
-        control,
-        getValues,
-        formState: { errors },
-    } = useForm({
-        defaultValues: {
-            title: post?.title || "",
-            slug: post?.$id || "",
-            content: post?.content || "",
-            status: post?.status || "active",
-        },
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    control,
+    getValues,
+  } = useForm({
+    defaultValues: {
+      title: post?.title || "",
+      slug: post?.slug || "",
+      content: post?.content || "",
+      status: post?.status || "active",
+    },
+  });
+
+  const navigate = useNavigate();
+  const userData = useSelector((state) => state.auth.userData);
+
+  const slugTransform = useCallback((value) => {
+    if (value && typeof value === "string") {
+      return value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-zA-Z\d\s]+/g, "-")
+        .replace(/\s+/g, "-");
+    }
+    return "";
+  }, []);
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "title") {
+        const newSlug = slugTransform(value.title);
+        setValue("slug", newSlug, { shouldValidate: true });
+      }
     });
 
-    const navigate = useNavigate();
-    const userData = useSelector((state) => state.auth?.userData);
+    return () => subscription.unsubscribe();
+  }, [watch, slugTransform, setValue]);
 
-    const submit = async (data) => {
-        try {
-            const file = data.image?.[0] ? await appwriteService.uploadFile(data.image[0]) : null;
+  const submit = async (data) => {
+    if (!userData) {
+      alert("You must be logged in to submit a post.");
+      return;
+    }
 
-            if (post) {
-                if (file && post.featuredImage) {
-                    await appwriteService.deleteFile(post.featuredImage);
-                }
+    try {
+      let imageId = post?.featuredImage;
 
-                const dbPost = await appwriteService.updatePost(post.$id, {
-                    ...data,
-                    featuredImage: file ? file.$id : post.featuredImage,
-                });
-
-                if (dbPost) navigate(`/post/${dbPost.$id}`);
-            } else {
-                if (!file) return;
-
-                const dbPost = await appwriteService.createPost({
-                    ...data,
-                    featuredImage: file.$id,
-                    userId: userData?.$id,
-                });
-
-                if (dbPost) navigate(`/post/${dbPost.$id}`);
-            }
-        } catch (error) {
-            console.error("PostForm :: submit :: error", error);
+      if (data.image && data.image[0]) {
+        const uploadedFile = await appwriteService.uploadFile(data.image[0]);
+        if (uploadedFile?.$id) {
+          imageId = uploadedFile.$id;
+          if (post?.featuredImage) {
+            await appwriteService.deleteFile(post.featuredImage);
+          }
         }
-    };
+      }
 
-    const slugTransform = useCallback((value) => {
-        return value
-            ?.trim()
-            .toLowerCase()
-            .replace(/[^a-zA-Z\d\s]+/g, "-")
-            .replace(/\s+/g, "-") || "";
-    }, []);
+      const postPayload = {
+        title: data.title,
+        slug: slugTransform(data.title),
+        content: data.content,
+        status: data.status,
+        featuredimage: imageId, // ✅ must match Appwrite schema
+        userid: userData.$id,
+      };
 
-    useEffect(() => {
-        const subscription = watch((value, { name }) => {
-            if (name === "title") {
-                setValue("slug", slugTransform(value.title), { shouldValidate: true });
-            }
-        });
+      let responsePost;
 
-        return () => subscription.unsubscribe();
-    }, [watch, slugTransform, setValue]);
+      if (post) {
+        responsePost = await appwriteService.updatePost(post.$id, postPayload);
+      } else {
+        responsePost = await appwriteService.createPost(postPayload);
+      }
 
-    return (
-        <form onSubmit={handleSubmit(submit)} className="flex flex-wrap">
-            {/* Left section */}
-            <div className="w-full md:w-2/3 px-2">
-                <Input
-                    label="Title :"
-                    placeholder="Title"
-                    className="mb-4"
-                    {...register("title", { required: "Title is required" })}
-                />
-                {errors.title && <p className="text-red-500 text-sm mb-2">{errors.title.message}</p>}
+      if (responsePost) {
+        navigate(`/post/${responsePost.$id}`);
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      console.error("Error submitting post:", err.message);
+      alert("Error: " + err.message);
+    }
+  };
 
-                <Input
-                    label="Slug :"
-                    placeholder="Slug"
-                    className="mb-4"
-                    {...register("slug", { required: "Slug is required" })}
-                    onInput={(e) => {
-                        setValue("slug", slugTransform(e.currentTarget.value), { shouldValidate: true });
-                    }}
-                />
-                {errors.slug && <p className="text-red-500 text-sm mb-2">{errors.slug.message}</p>}
+  return (
+    <form onSubmit={handleSubmit(submit)} className="flex flex-wrap">
+      <div className="w-2/3 px-2">
+        <Input
+          label="Title :"
+          placeholder="Enter post title"
+          className="mb-4"
+          {...register("title", { required: true })}
+        />
+        <Input
+          label="Slug :"
+          placeholder="Auto-generated slug"
+          className="mb-4"
+          {...register("slug", { required: true })}
+          onInput={(e) => {
+            setValue("slug", slugTransform(e.currentTarget.value), {
+              shouldValidate: true,
+            });
+          }}
+        />
+        <RTE
+          label="Content :"
+          name="content"
+          control={control}
+          defaultValue={getValues("content")}
+        />
+      </div>
 
-                <RTE
-                    label="Content :"
-                    name="content"
-                    control={control}
-                    defaultValue={getValues("content")}
-                />
-            </div>
-
-            {/* Right section */}
-            <div className="w-full md:w-1/3 px-2">
-                <Input
-                    label="Featured Image :"
-                    type="file"
-                    className="mb-4"
-                    accept="image/png, image/jpg, image/jpeg, image/gif"
-                    {...register("image", {
-                        required: !post ? "Image is required" : false,
-                    })}
-                />
-                {errors.image && <p className="text-red-500 text-sm mb-2">{errors.image.message}</p>}
-
-                {post && post.featuredImage && (
-                    <div className="w-full mb-4">
-                        <img
-                            src={appwriteService.getFilePreview(post.featuredImage)}
-                            alt={post.title}
-                            className="rounded-lg max-h-64 object-cover"
-                        />
-                    </div>
-                )}
-
-                <Select
-                    options={["active", "inactive"]}
-                    label="Status"
-                    className="mb-4"
-                    {...register("status", { required: "Status is required" })}
-                />
-                {errors.status && <p className="text-red-500 text-sm mb-2">{errors.status.message}</p>}
-
-                <Button type="submit" bgColor={post ? "bg-green-500" : undefined} className="w-full">
-                    {post ? "Update" : "Submit"}
-                </Button>
-            </div>
-        </form>
-    );
+      <div className="w-1/3 px-2">
+        <Input
+          label="Featured Image :"
+          type="file"
+          accept="image/png, image/jpg, image/jpeg, image/gif"
+          className="mb-4"
+          {...register("image", { required: !post })}
+        />
+        {post?.featuredImage && (
+          <div className="w-full mb-4">
+            <img
+              src={appwriteService.getFilePreview(post.featuredImage)}
+              alt={post.title}
+              className="rounded-lg"
+            />
+          </div>
+        )}
+        <Select
+          options={["active", "inactive"]}
+          label="Status"
+          className="mb-4"
+          {...register("status", { required: true })}
+        />
+        <Button
+          type="submit"
+          className="w-full"
+          bgColor={post ? "bg-green-600" : "bg-blue-600"}
+        >
+          {post ? "Update Post" : "Create Post"}
+        </Button>
+      </div>
+    </form>
+  );
 }

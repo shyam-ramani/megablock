@@ -35,11 +35,18 @@ function Post() {
         <div className="py-8">
             <Container>
                 <div className="w-full flex justify-center mb-4 relative border rounded-xl p-2">
-                    <img
-                        src={appwriteService.getFilePreview(post.featuredImage)}
-                        alt={post.title}
-                        className="rounded-xl"
-                    />
+                    {post.featuredImage ? (
+                        <img
+                            src={appwriteService.getFilePreview(post.featuredImage)}
+                            alt={post.title}
+                            className="rounded-xl max-h-[500px] object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-64 flex items-center justify-center bg-gray-200 text-gray-500 rounded-xl">
+                            No image available
+                        </div>
+                    )}
+
                     {isAuthor && (
                         <div className="absolute right-6 top-6">
                             <Link to={`/edit-post/${post.$id}`}>

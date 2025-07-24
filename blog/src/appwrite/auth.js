@@ -1,41 +1,54 @@
-import { Client, Account } from "appwrite";
+import conf from "../conf/conf";
+import { Account, Client, ID } from "appwrite";
 
 class AuthService {
-  client;
+  client = new Client();
   account;
 
   constructor() {
-    this.client = new Client()
-      .setEndpoint(import.meta.env.VITE_APPWRITE_URL)
-      .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
-
+    this.client
+      .setEndpoint(conf.appwriteUrl)
+      .setProject(conf.appwriteProjectId);
     this.account = new Account(this.client);
   }
 
-  async login({ email, password }) {
-   return await this.account.createEmailPasswordSession(email, password);
-  }
-
   async createAccount({ email, password, name }) {
-    // Create new user account
-    const user = await this.account.create('unique()', email, password, name);
-    // Optionally, auto-login after account creation
-    await this.login({ email, password });
-    return user;
-  }
-
-  async getCurrentUser() {
-    // Returns user details if logged in, otherwise throws error
     try {
-      return await this.account.get();
-    } catch {
-      return null; // Not logged in
+      const user = await this.account.create(ID.unique(), email, password, name);
+      if (user) {
+        return await this.login({ email, password });
+      }
+      else return user;
+
+    } catch (error) {
+      throw error;
     }
   }
 
+  async login({ email, password }) {
+    try {
+      return await this.account.createEmailPasswordSession(email, password);
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getCurrentUser() {
+    try {
+      return await this.account.get();
+    } catch (error) {
+      throw error
+    }
+    return null;
+  }
+
   async logout() {
-    // Delete current session (logout)
-    return await this.account.deleteSession('current');
+    try {
+      return await this.account.deleteSessions();
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
