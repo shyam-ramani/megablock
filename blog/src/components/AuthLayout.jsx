@@ -8,11 +8,16 @@ export default function Protected({ children, authentication = true }) {
   const authStatus = useSelector((state) => state.auth.status);
 
   useEffect(() => {
-    const shouldBeAuthenticated = authentication === true;
+    // if( authStatus === true) {
+    //   navigate('/');
+    // }
+    // else if (authStatus === false) {
+    //   navigate('/login');
+    // }
 
-    if (shouldBeAuthenticated && !authStatus) {
+    if (authentication && authStatus !== authentication) {
       navigate('/login');
-    } else if (!shouldBeAuthenticated && authStatus) {
+    } else if (!authentication && authStatus !== authentication) {
       navigate('/');
     }
 
