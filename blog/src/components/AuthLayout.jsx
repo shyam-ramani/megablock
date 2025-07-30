@@ -14,12 +14,12 @@ export default function Protected({ children, authentication = true }) {
     // else if (authStatus === false) {
     //   navigate('/login');
     // }
-
     if (authentication && authStatus !== authentication) {
       navigate('/login');
     } else if (!authentication && authStatus !== authentication) {
       navigate('/');
     }
+
 
     setLoading(false);
   }, [authStatus, navigate, authentication]);
