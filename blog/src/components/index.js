@@ -16,7 +16,6 @@ import { useCallback, useEffect } from "react";
 import { useSelector } from "react-redux";
 import appwriteService from "../appwrite/config";
 import { useForm } from "react-hook-form";
-
 // Centralized export file
 export {
   AuthLayout,
