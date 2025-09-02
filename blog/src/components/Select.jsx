@@ -19,17 +19,17 @@ const Select = React.forwardRef(function Select(
         </label>
       )}
       <select
-  id={id}
-  ref={ref}
-  className={`px-3 py-2 rounded-lg bg-blue-100 text-blue-900 border border-yellow-400 w-full ${className}`}
-  {...props}
->
-  {options?.map((option) => (
-    <option key={option} value={option}>
-      {option}
-    </option>
-  ))}
-</select>
+        id={id}
+        ref={ref}
+        className={`px-3 py-2 rounded-lg bg-blue-100 text-blue-900 border border-yellow-400 w-full ${className}`}
+        {...props}
+      >
+        {options?.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
 
     </div>
   )

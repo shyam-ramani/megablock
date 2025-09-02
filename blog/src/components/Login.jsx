@@ -73,9 +73,9 @@ function Login() {
               },
             })}
           />
-          {errors.email && (
+          {/* {errors.email && (
             <p className="text-sm text-red-500 pl-1">{errors.email.message}</p>
-          )}
+          )} */}
 
           <Input
             label="Password"
@@ -85,13 +85,13 @@ function Login() {
               required: "Password is required",
             })}
           />
-          {errors.password && (
+          {/* {errors.password && (
             <p className="text-sm text-red-500 pl-1">{errors.password.message}</p>
-          )}
+          )} */}
 
           <Button type="submit" className="w-full">
             Sign In
-          </Button>
+          </Button> 
         </form>
       </div>
     </div>
