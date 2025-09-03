@@ -43,10 +43,10 @@ export class Service {
       {
         title,
         content,
-        featuredimage,
+       featuredimage,
         status
       }
-    );
+    )
   }
 
   async deletePost(slug) {
